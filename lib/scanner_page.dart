@@ -34,8 +34,8 @@ class _ScannerPageState extends State<ScannerPage> {
 
     FlutterBluePlus.scanResults.listen((results) {
       for (ScanResult result in results) {
-        if (!devicesList
-            .any((device) => device.device.id == result.device.id)) {
+        if (!devicesList.any(
+            (device) => device.device.remoteId == result.device.remoteId)) {
           setState(() {
             devicesList.add(result);
           });

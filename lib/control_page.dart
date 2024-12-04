@@ -20,7 +20,8 @@ class _ControlPageState extends State<ControlPage> {
 
   final String txCtlUUID = "5f6d4f53-5f52-5043-5f74-785f63746c5f";
   final String rxCtlUUID = "5f6d4f53-5f52-5043-5f72-785f63746c5f";
-  final String dataUUID = "5f6d4f53-5f52-5043-5f64-6174615f5f5f"; // UUID correcto
+  final String dataUUID =
+      "5f6d4f53-5f52-5043-5f64-6174615f5f5f"; // UUID correcto
 
   String receivedData = ""; // Almacena la respuesta procesada
   String buffer = ""; // Almacena datos fragmentados
@@ -70,9 +71,9 @@ class _ControlPageState extends State<ControlPage> {
       List<BluetoothService> services = await widget.device.discoverServices();
 
       for (var service in services) {
-        print('Service UUID: ${service.uuid}');
+        debugPrint('Service UUID: ${service.uuid}');
         for (var characteristic in service.characteristics) {
-          print('  Characteristic UUID: ${characteristic.uuid}');
+          debugPrint('  Characteristic UUID: ${characteristic.uuid}');
           if (characteristic.uuid.toString() == txCtlUUID) {
             txCtlCharacteristic = characteristic;
           } else if (characteristic.uuid.toString() == rxCtlUUID) {
@@ -93,47 +94,53 @@ class _ControlPageState extends State<ControlPage> {
           dataCharacteristic == null ||
           rxCtlCharacteristic == null) {
         showError("No se encontraron todas las características necesarias.");
+        return;
       }
+
+      // Una vez conectados y descubiertas las características, enviar el comando config.get
+      await sendCommand(
+          '{"id":1,"method":"Config.Get","params":{"key":"app"}}');
     } catch (e) {
       showError("Error al descubrir características: $e");
     }
   }
 
-void processReceivedData(List<int> data) async {
-  // Verifica si el dato es la longitud del mensaje
-  if (data.length == 4) {
-    // Convierte los 4 bytes en un número entero (Big-Endian)
-    int messageLength = ByteData.sublistView(Uint8List.fromList(data))
-        .getUint32(0, Endian.big);
+  void processReceivedData(List<int> data) async {
+    // Verifica si el dato es la longitud del mensaje
+    if (data.length == 4) {
+      // Convierte los 4 bytes en un número entero (Big-Endian)
+      int messageLength = ByteData.sublistView(Uint8List.fromList(data))
+          .getUint32(0, Endian.big);
 
-    print("Longitud del mensaje recibida: $messageLength bytes");
+      debugPrint("Longitud del mensaje recibida: $messageLength bytes");
 
-    if (messageLength > 0) {
-      // Lee los datos reales desde dataCharacteristic
-      await readFrame(messageLength);
+      if (messageLength > 0) {
+        // Lee los datos reales desde dataCharacteristic
+        await readFrame(messageLength);
+      }
+    } else {
+      debugPrint("Datos inesperados recibidos: ${utf8.decode(data)}");
     }
-  } else {
-    print("Datos inesperados recibidos: ${utf8.decode(data)}");
   }
-}
 
-Future<void> readFrame(int length) async {
-  try {
-    // Lee los datos reales desde dataCharacteristic
-    List<int> frameData = await dataCharacteristic!.read();
+  Future<void> readFrame(int length) async {
+    try {
+      // Lee los datos reales desde dataCharacteristic
+      List<int> frameData = await dataCharacteristic!.read();
 
-    // Decodifica el contenido recibido
-    String frameContent = utf8.decode(frameData);
-    print("Contenido del mensaje recibido: $frameContent");
+      // Decodifica el contenido recibido
+      String frameContent = utf8.decode(frameData);
+      debugPrint("Contenido del mensaje recibido: $frameContent");
 
-    setState(() {
-      receivedData = frameContent; // Actualiza la interfaz con los datos reales
-    });
-  } catch (e) {
-    print("Error al leer el frame: $e");
-    showError("Error al leer el mensaje.");
+      setState(() {
+        receivedData =
+            frameContent; // Actualiza la interfaz con los datos reales
+      });
+    } catch (e) {
+      debugPrint("Error al leer el frame: $e");
+      showError("Error al leer el mensaje.");
+    }
   }
-}
 
   Future<void> sendCommand(String command) async {
     if (txCtlCharacteristic == null || dataCharacteristic == null) {
@@ -184,18 +191,18 @@ Future<void> readFrame(int length) async {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Control ${widget.device.name}'),
+        title: const Text('Configuracion'),
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
+                const Padding(
+                  padding: EdgeInsets.all(8.0),
                   child: Text(
                     'Received Data:',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ),
                 Padding(
@@ -217,14 +224,16 @@ Future<void> readFrame(int length) async {
                 ElevatedButton(
                   onPressed: txCtlCharacteristic != null &&
                           dataCharacteristic != null
-                      ? () => sendCommand('{"id":2,"method":"SetLast","params":{"year":2024,"month":1,"day":1}}')
+                      ? () => sendCommand(
+                          '{"id":2,"method":"SetLast","params":{"year":2024,"month":1,"day":1}}')
                       : null,
                   child: const Text("Last AC"),
                 ),
                 ElevatedButton(
                   onPressed: txCtlCharacteristic != null &&
                           dataCharacteristic != null
-                      ? () => sendCommand('{"id":3,"method":"FS.Put","params":{"filename":"events.txt","append":false,"data":"eyJldmVudHMiOiBbMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMF19"}}')
+                      ? () => sendCommand(
+                          '{"id":3,"method":"FS.Put","params":{"filename":"events.txt","append":false,"data":"eyJldmVudHMiOiBbMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMF19"}}')
                       : null,
                   child: const Text("Eventos.txt"),
                 ),
