@@ -71,36 +71,47 @@ class _ScannerPageState extends State<ScannerPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('BLE Scanner'),
-        actions: [
-          IconButton(
-            icon: Icon(isScanning ? Icons.stop : Icons.refresh),
-            onPressed: isScanning ? null : startScan,
-          ),
-        ],
-      ),
-      body: isConnecting
-          ? const Center(child: CircularProgressIndicator())
-          : devicesList.isEmpty
-              ? Center(
-                  child: isScanning
-                      ? const CircularProgressIndicator()
-                      : const Text('No devices found.'),
-                )
-              : ListView.builder(
-                  itemCount: devicesList.length,
-                  itemBuilder: (context, index) {
-                    final device = devicesList[index].device;
-                    return ListTile(
-                      title: Text(
-                        device.platformName.isNotEmpty ? device.platformName   : 'Unknown',
-                      ),
-                      subtitle: Text(device.remoteId.toString()),
-                      onTap: () => connectToDevice(device),
-                    );
-                  },
-                ),
-    );
+        appBar: AppBar(
+          title: const Text('Dispositivos'),
+          actions: [
+            IconButton(
+              icon: Icon(isScanning ? Icons.stop : Icons.refresh),
+              onPressed: isScanning ? null : startScan,
+            ),
+          ],
+        ),
+        body: isConnecting
+            ? const Center(child: CircularProgressIndicator())
+            : devicesList.isEmpty
+                ? Center(
+                    child: isScanning
+                        ? const CircularProgressIndicator()
+                        : const Text('No hay dispositivos.'),
+                  )
+                : ListView.builder(
+                    itemCount: devicesList.length,
+                    itemBuilder: (context, index) {
+                      final device = devicesList[index].device;
+
+                      // Verificar si el nombre del dispositivo comienza con los prefijos deseados
+                      if (device.platformName.startsWith('panel_') ||
+                          device.platformName.startsWith('ergo_') ||
+                          device.platformName.startsWith('dias_') ||
+                          device.platformName.startsWith('cruz_')) {
+                        return ListTile(
+                          title: Text(
+                            device.platformName.isNotEmpty
+                                ? device.platformName
+                                : 'Unknown',
+                          ),
+                          subtitle: Text(device.remoteId.toString()),
+                          onTap: () => connectToDevice(device),
+                        );
+                      } else {
+                        // Devuelve un espacio vacío para los dispositivos no coincidentes
+                        return const SizedBox.shrink();
+                      }
+                    },
+                  ));
   }
 }
