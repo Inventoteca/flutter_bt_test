@@ -212,7 +212,21 @@ Future<void> readFrame(int length) async {
                           dataCharacteristic != null
                       ? () => sendCommand('{"id":1999,"method":"Wifi.Scan"}')
                       : null,
-                  child: const Text("Enviar Comando RPC"),
+                  child: const Text("WiFi.Scan"),
+                ),
+                ElevatedButton(
+                  onPressed: txCtlCharacteristic != null &&
+                          dataCharacteristic != null
+                      ? () => sendCommand('{"id":2,"method":"SetLast","params":{"year":2024,"month":1,"day":1}}')
+                      : null,
+                  child: const Text("Last AC"),
+                ),
+                ElevatedButton(
+                  onPressed: txCtlCharacteristic != null &&
+                          dataCharacteristic != null
+                      ? () => sendCommand('{"id":3,"method":"FS.Put","params":{"filename":"events.txt","append":false,"data":"eyJldmVudHMiOiBbMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMF19"}}')
+                      : null,
+                  child: const Text("Eventos.txt"),
                 ),
               ],
             ),
