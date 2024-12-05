@@ -10,4 +10,10 @@ class CustomColors {
   static const Color panelBackground = Color.fromARGB(255, 133, 156, 161);
   static const Color panel = Color.fromARGB(255, 216, 216, 216);
   static const Color panelBack = Color.fromARGB(255, 255, 226, 182);
+  static const Color casiAccidente = Colors.orange;
+  static const Color noIncapacitante = Colors.blue;
+  static const Color primerAuxilio = Colors.yellow;
+  static const Color accidenteIncapacitante = Colors.red;
+  static const Color sinAccidente = Colors.green;
+  
 }

@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+import 'res/custom_colors.dart';
+import '/widgets/day_number_grid.dart';
 
 class ControlPage extends StatefulWidget {
   final BluetoothDevice device;
@@ -24,8 +26,45 @@ class _ControlPageState extends State<ControlPage> {
       "5f6d4f53-5f52-5043-5f64-6174615f5f5f"; // UUID correcto
 
   String receivedData = ""; // Almacena la respuesta procesada
+  String fechaHora = "";
   String buffer = ""; // Almacena datos fragmentados
   bool isLoading = false;
+  var jsonArray = [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ];
+  var decodedContent;
   StreamSubscription<List<int>>? rxSubscription;
   StreamSubscription<BluetoothConnectionState>? connectionSubscription;
 
@@ -81,7 +120,8 @@ class _ControlPageState extends State<ControlPage> {
 
             // Habilita notificaciones
             await rxCtlCharacteristic!.setNotifyValue(true);
-            rxSubscription = rxCtlCharacteristic!.value.listen((data) {
+            rxSubscription =
+                rxCtlCharacteristic!.lastValueStream.listen((data) {
               processReceivedData(data); // Procesa fragmentos
             });
           } else if (characteristic.uuid.toString() == dataUUID) {
@@ -98,8 +138,17 @@ class _ControlPageState extends State<ControlPage> {
       }
 
       // Una vez conectados y descubiertas las características, enviar el comando config.get
-      await sendCommand(
-          '{"id":1,"method":"Config.Get","params":{"key":"app"}}');
+      if (widget.device.platformName.startsWith('cruz_')) {
+        await sendCommand('{"id":1,"method":"Sys.GetTime"}');
+
+        await sendCommand(
+            '{"id":1,"method":"FS.Get","params":{"filename":"events.txt"}}');
+      } else {
+        await sendCommand(
+            '{"id":2,"method":"Config.Get","params":{"key":"app"}}');
+      }
+
+      // if(widget.platformName.startsWith('panel_'))
     } catch (e) {
       showError("Error al descubrir características: $e");
     }
@@ -118,8 +167,6 @@ class _ControlPageState extends State<ControlPage> {
         // Lee los datos reales desde dataCharacteristic
         await readFrame(messageLength);
       }
-    } else {
-      debugPrint("Datos inesperados recibidos: ${utf8.decode(data)}");
     }
   }
 
@@ -130,11 +177,60 @@ class _ControlPageState extends State<ControlPage> {
 
       // Decodifica el contenido recibido
       String frameContent = utf8.decode(frameData);
-      debugPrint("Contenido del mensaje recibido: $frameContent");
+      DateTime dateTime = DateTime.now();
+      debugPrint("BT in: $frameContent");
+
+      try {
+        // Convierte los datos recibidos en una cadena
+        String jsonString = frameContent;
+        debugPrint("Datos recibidos: $jsonString");
+
+        // Intenta parsear el JSON
+        var jsonResponse = jsonDecode(jsonString);
+
+        // Verifica si `result` contiene `time`
+        if (jsonResponse['result'] != null &&
+            jsonResponse['result']['time'] != null) {
+          int unixTime = jsonResponse['result']['time'];
+
+          // Convierte UNIX time a DateTime
+          dateTime = DateTime.fromMillisecondsSinceEpoch(unixTime * 1000);
+
+          debugPrint("Fecha y hora recibidas: $dateTime");
+        }
+
+        // Verifica si `result` contiene `data`
+        else if (jsonResponse['result'] != null &&
+            jsonResponse['result']['data'] != null) {
+          // Obtiene el contenido codificado en Base64
+          String base64Data = jsonResponse['result']['data'];
+
+          // Decodifica el contenido Base64 a texto
+          String decodedText = utf8.decode(base64Decode(base64Data));
+
+          // Decodifica el texto a un arreglo JSON o un mapa
+          decodedContent = jsonDecode(decodedText);
+
+          if (decodedContent is List) {
+            // Si es una lista
+            debugPrint("Contenido decodificado (lista): $decodedContent");
+          } else if (decodedContent is Map) {
+            // Si es un mapa
+            debugPrint("Contenido decodificado (mapa): $decodedContent");
+            setState(() {
+              receivedData = decodedContent
+                  .toString(); // Actualiza la interfaz con los datos reales
+            });
+          } else {
+            debugPrint("Contenido inesperado decodificado: $decodedContent");
+          }
+        }
+      } catch (e) {
+        debugPrint("Error al procesar los datos recibidos: $e");
+      }
 
       setState(() {
-        receivedData =
-            frameContent; // Actualiza la interfaz con los datos reales
+        fechaHora = "$dateTime";
       });
     } catch (e) {
       debugPrint("Error al leer el frame: $e");
@@ -190,55 +286,62 @@ class _ControlPageState extends State<ControlPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Configuracion'),
-      ),
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Padding(
-                  padding: EdgeInsets.all(8.0),
-                  child: Text(
-                    'Received Data:',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
+        appBar: AppBar(
+          title: const Text('Configuracion'),
+        ),
+        body: isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : Card(
+                color: CustomColors.panel,
+                elevation: 4,
+                margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
                 ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text(
-                    receivedData.isEmpty
-                        ? "No se ha recibido respuesta."
-                        : receivedData,
-                    style: const TextStyle(fontSize: 16),
-                  ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(15.0),
+                      child: Text(
+                        widget.device.platformName,
+                        style: const TextStyle(fontWeight: FontWeight.normal),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    DayNumberGrid(diaHoy: 31, jsonValue: receivedData),
+                    const SizedBox(height: 10),
+                    ElevatedButton(
+                      onPressed: txCtlCharacteristic != null &&
+                              dataCharacteristic != null
+                          ? () =>
+                              sendCommand('{"id":1999,"method":"Wifi.Scan"}')
+                          : null,
+                      child: const Text("WiFi.Scan"),
+                    ),
+                    ElevatedButton(
+                      onPressed: txCtlCharacteristic != null &&
+                              dataCharacteristic != null
+                          ? () => sendCommand(
+                              '{"id":2,"method":"SetLast","params":{"year":2024,"month":1,"day":1}}')
+                          : null,
+                      child: const Text("Last AC"),
+                    ),
+                    ElevatedButton(
+                      onPressed: txCtlCharacteristic != null &&
+                              dataCharacteristic != null
+                          ? () => sendCommand(
+                              '{"id":3,"method":"FS.Put","params":{"filename":"events.txt","append":false,"data":"eyJldmVudHMiOiBbMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMF19"}}')
+                          : null,
+                      child: const Text("Eventos.txt"),
+                    ),
+                    Text(
+                      fechaHora,
+                      style: const TextStyle(fontWeight: FontWeight.normal),
+                    ),
+                  ],
                 ),
-                ElevatedButton(
-                  onPressed: txCtlCharacteristic != null &&
-                          dataCharacteristic != null
-                      ? () => sendCommand('{"id":1999,"method":"Wifi.Scan"}')
-                      : null,
-                  child: const Text("WiFi.Scan"),
-                ),
-                ElevatedButton(
-                  onPressed: txCtlCharacteristic != null &&
-                          dataCharacteristic != null
-                      ? () => sendCommand(
-                          '{"id":2,"method":"SetLast","params":{"year":2024,"month":1,"day":1}}')
-                      : null,
-                  child: const Text("Last AC"),
-                ),
-                ElevatedButton(
-                  onPressed: txCtlCharacteristic != null &&
-                          dataCharacteristic != null
-                      ? () => sendCommand(
-                          '{"id":3,"method":"FS.Put","params":{"filename":"events.txt","append":false,"data":"eyJldmVudHMiOiBbMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMF19"}}')
-                      : null,
-                  child: const Text("Eventos.txt"),
-                ),
-              ],
-            ),
-    );
+              ));
   }
 }
