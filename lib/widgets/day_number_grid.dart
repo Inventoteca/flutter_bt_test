@@ -4,19 +4,20 @@ import 'dart:convert';
 class DayNumberGrid extends StatelessWidget {
   final int diaHoy;
   final Color dayColor = Colors.transparent;
-  final String jsonValue;
+  //final dynamic jsonValue;
+  List<int> events = List<int>.filled(32, 0);
 
-  const DayNumberGrid({
+  DayNumberGrid({
     super.key,
     required this.diaHoy,
-    required this.jsonValue,
+    required this.events,
   });
 
   //@override
   @override
   Widget build(BuildContext context) {
     final int diaActual = diaHoy;
-    debugPrint("Eventos: $jsonValue");
+    debugPrint("Grid: $events");
 
     return Expanded(
       child: Padding(
@@ -47,59 +48,6 @@ class DayNumberGrid extends StatelessWidget {
               48,
               49
             ];
-            List<int> events = [
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0
-            ];
-
-            try {
-              // Corrige el formato de las claves
-              String correctedJson = jsonValue.replaceAllMapped(
-                RegExp(r'(\w+):'),
-                (Match match) => '"${match[1]}":',
-              );
-
-              // Decodifica el JSON corregido
-              Map<String, dynamic> decodedData = jsonDecode(correctedJson);
-
-              // Extrae la lista de eventos
-              List<int> events = List<int>.from(decodedData['events']);
-
-              // Imprime el resultado
-              debugPrint("Lista de eventos: $events");
-            } catch (e) {
-              debugPrint("Error al decodificar el JSON: $e");
-            }
 
             final bool isIgnored = ignoredIndices.contains(dayNumber);
 

@@ -27,44 +27,12 @@ class _ControlPageState extends State<ControlPage> {
 
   String receivedData = ""; // Almacena la respuesta procesada
   String fechaHora = "";
+  int fechaDia = 31;
   String buffer = ""; // Almacena datos fragmentados
   bool isLoading = false;
-  var jsonArray = [
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0
-  ];
-  var decodedContent;
+  List<int> events = List<int>.filled(32, 0);
+
+  //var decodedContent;
   StreamSubscription<List<int>>? rxSubscription;
   StreamSubscription<BluetoothConnectionState>? connectionSubscription;
 
@@ -197,6 +165,11 @@ class _ControlPageState extends State<ControlPage> {
           dateTime = DateTime.fromMillisecondsSinceEpoch(unixTime * 1000);
 
           debugPrint("Fecha y hora recibidas: $dateTime");
+
+          setState(() {
+            fechaHora = "$dateTime";
+            fechaDia = dateTime.day;
+          });
         }
 
         // Verifica si `result` contiene `data`
@@ -209,7 +182,7 @@ class _ControlPageState extends State<ControlPage> {
           String decodedText = utf8.decode(base64Decode(base64Data));
 
           // Decodifica el texto a un arreglo JSON o un mapa
-          decodedContent = jsonDecode(decodedText);
+          var decodedContent = jsonDecode(decodedText);
 
           if (decodedContent is List) {
             // Si es una lista
@@ -217,10 +190,20 @@ class _ControlPageState extends State<ControlPage> {
           } else if (decodedContent is Map) {
             // Si es un mapa
             debugPrint("Contenido decodificado (mapa): $decodedContent");
-            setState(() {
-              receivedData = decodedContent
-                  .toString(); // Actualiza la interfaz con los datos reales
-            });
+            //List<int> events =
+            //    List<int>.filled(32, 0); // Lista predeterminada de ceros
+            if (decodedContent.containsKey('events')) {
+              final rawEvents = decodedContent['events'];
+              if (rawEvents is List) {
+                // Conversión explícita a List<int>
+                setState(() {
+                  receivedData = decodedContent
+                      .toString(); // Actualiza la interfaz con los datos reales
+                  events = List<int>.from(rawEvents.map((e) => e as int));
+                  //debugPrint("Eventos: $events");
+                });
+              }
+            }
           } else {
             debugPrint("Contenido inesperado decodificado: $decodedContent");
           }
@@ -228,10 +211,6 @@ class _ControlPageState extends State<ControlPage> {
       } catch (e) {
         debugPrint("Error al procesar los datos recibidos: $e");
       }
-
-      setState(() {
-        fechaHora = "$dateTime";
-      });
     } catch (e) {
       debugPrint("Error al leer el frame: $e");
       showError("Error al leer el mensaje.");
@@ -310,7 +289,7 @@ class _ControlPageState extends State<ControlPage> {
                       ),
                     ),
                     const SizedBox(height: 10),
-                    DayNumberGrid(diaHoy: 31, jsonValue: receivedData),
+                    DayNumberGrid(diaHoy: fechaDia, events: events),
                     const SizedBox(height: 10),
                     ElevatedButton(
                       onPressed: txCtlCharacteristic != null &&
