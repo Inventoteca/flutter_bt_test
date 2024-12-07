@@ -278,7 +278,33 @@ class _ControlPageState extends State<ControlPage> {
     //String jsonString = jsonEncode(jsonData);
 
     debugPrint("NEW DateTime: $dateTime");
-    //sendSetTimeCommand();
+    sendSetTimeCommand(dateTime.year, dateTime.month, dateTime.day,
+        dateTime.hour, dateTime.minute, dateTime.second);
+  }
+
+  void sendSetTimeCommand(
+      int year, int month, int day, int hour, int minute, int second) {
+    // Genera el mapa de datos
+
+    // Genera el comando completo
+    String command = '''
+  {
+    "id":6,
+    "method":"SetTime",
+    "params":{
+      "year":$year,
+      "month": $month,
+      "day": $day,
+      "hour": $hour,
+      "minute": $minute,
+      "second": $second
+    }
+  }
+  ''';
+
+    // Envía el comando
+    sendCommand(command);
+    debugPrint("Comando enviado: $command");
   }
 
   // Función que se llamará desde DayNumberGrid
