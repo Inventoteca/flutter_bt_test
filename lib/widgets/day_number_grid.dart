@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 
-class DayNumberGrid extends StatelessWidget {
+class DayNumberGrid extends StatefulWidget {
   final int diaHoy;
   final String fechaHora;
   final List<int> events;
   final Function(int day, int value) onEventUpdate;
+  final Function(DateTime dateTime) onDateUpdate;
 
   const DayNumberGrid({
     super.key,
@@ -12,11 +13,44 @@ class DayNumberGrid extends StatelessWidget {
     required this.events,
     required this.fechaHora,
     required this.onEventUpdate,
+    required this.onDateUpdate,
   });
 
   @override
+  State<DayNumberGrid> createState() => _DayNumberGridState();
+}
+
+class _DayNumberGridState extends State<DayNumberGrid> {
+  late String fechaHora;
+
+  Future<void> _selectDate(BuildContext context) async {
+    DateTime initialDate = DateTime.now();
+    DateTime? pickedDate = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: DateTime(2000), // Fecha mínima permitida
+      lastDate: DateTime(2100), // Fecha máxima permitida
+    );
+
+    if (pickedDate != null) {
+      // Ajusta pickedDate para incluir la hora actual
+      DateTime adjustedDate = DateTime(
+        pickedDate.year,
+        pickedDate.month,
+        pickedDate.day,
+        initialDate.hour,
+        initialDate.minute,
+        initialDate.second,
+      );
+
+      // Llama a la función de actualización con la fecha ajustada
+      widget.onDateUpdate(adjustedDate);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final int diaActual = diaHoy;
+    final int diaActual = widget.diaHoy;
 
     return Column(
       mainAxisSize: MainAxisSize.min, // Previene expandirse infinitamente
@@ -85,7 +119,7 @@ class DayNumberGrid extends StatelessWidget {
                 Color finalDayColor = Colors.transparent;
 
                 if (dayNumber <= diaActual) {
-                  final int eventDay = events[dayNumber];
+                  final int eventDay = widget.events[dayNumber];
                   finalDayColor = _getDayColor(eventDay);
                 }
 
@@ -114,52 +148,58 @@ class DayNumberGrid extends StatelessWidget {
         const SizedBox(height: 20),
         Padding(
           padding: const EdgeInsets.all(8.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text(
-                "Mes:",
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  //color: Colors.orange,
+          child: InkWell(
+            onTap: () => _selectDate(context), // Selector para el mes
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text(
+                  "Mes:",
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    //color: Colors.orange,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 20),
-              Text(
-                fechaHora.split('-')[0],
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.green,
+                const SizedBox(width: 20),
+                Text(
+                  widget.fechaHora.split('-')[0],
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
         Padding(
           padding: const EdgeInsets.all(8.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text(
-                "Año:",
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  //color: Colors.orange,
+          child: InkWell(
+            onTap: () => _selectDate(context), // Selector para el anio
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text(
+                  "Año:",
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    //color: Colors.orange,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 20),
-              Text(
-                fechaHora.split('-')[1],
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.green,
+                const SizedBox(width: 20),
+                Text(
+                  widget.fechaHora.split('-')[1],
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ],
@@ -217,7 +257,7 @@ class DayNumberGrid extends StatelessWidget {
       title: Text(label),
       onTap: () {
         Navigator.of(context).pop();
-        onEventUpdate(dayNumber, eventValue);
+        widget.onEventUpdate(dayNumber, eventValue);
       },
     );
   }

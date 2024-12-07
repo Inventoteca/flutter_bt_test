@@ -10,7 +10,7 @@ import 'package:intl/intl.dart';
 class ControlPage extends StatefulWidget {
   final BluetoothDevice device;
 
-  const ControlPage({Key? key, required this.device}) : super(key: key);
+  const ControlPage({super.key, required this.device});
 
   @override
   State<ControlPage> createState() => _ControlPageState();
@@ -268,6 +268,20 @@ class _ControlPageState extends State<ControlPage> {
   }
 
   // Función que se llamará desde DayNumberGrid
+  void updateDate(DateTime dateTime) {
+    setState(() {
+      //events[day] = value; // Actualiza el evento para el día seleccionado
+    });
+
+    // Genera el JSON para simular su envío o guardado
+    //Map<String, dynamic> jsonData = {"events": events};
+    //String jsonString = jsonEncode(jsonData);
+
+    debugPrint("NEW DateTime: $dateTime");
+    //sendSetTimeCommand();
+  }
+
+  // Función que se llamará desde DayNumberGrid
   void updateEvent(int day, int value) {
     setState(() {
       events[day] = value; // Actualiza el evento para el día seleccionado
@@ -334,6 +348,7 @@ class _ControlPageState extends State<ControlPage> {
                         events: events,
                         fechaHora: fechaHora,
                         onEventUpdate: updateEvent,
+                        onDateUpdate: updateDate,
                       ),
                     /*Column(
                         children: [
