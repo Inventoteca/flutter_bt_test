@@ -1,136 +1,224 @@
 import 'package:flutter/material.dart';
-import 'dart:convert';
 
 class DayNumberGrid extends StatelessWidget {
   final int diaHoy;
-  final Color dayColor = Colors.transparent;
-  //final dynamic jsonValue;
-  List<int> events = List<int>.filled(32, 0);
+  final String fechaHora;
+  final List<int> events;
+  final Function(int day, int value) onEventUpdate;
 
-  DayNumberGrid({
+  const DayNumberGrid({
     super.key,
     required this.diaHoy,
     required this.events,
+    required this.fechaHora,
+    required this.onEventUpdate,
   });
 
-  //@override
   @override
   Widget build(BuildContext context) {
     final int diaActual = diaHoy;
-    debugPrint("Grid: $events");
 
-    return Expanded(
-      child: Padding(
-        padding: const EdgeInsets.only(
-          left: 10,
-          right: 10,
+    return Column(
+      mainAxisSize: MainAxisSize.min, // Previene expandirse infinitamente
+      crossAxisAlignment: CrossAxisAlignment.center,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Padding(
+          padding: EdgeInsets.all(8.0),
+          child: Text(
+            "Cruz de Seguridad",
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.orange,
+            ),
+          ),
         ),
-        child: GridView.count(
-          physics: const NeverScrollableScrollPhysics(),
-          crossAxisCount: 7,
-          children: List.generate(49, (index) {
-            int dayNumber = index + 1;
-            final List<int> ignoredIndices = [
-              1,
-              2,
-              6,
-              7,
-              8,
-              9,
-              13,
-              14,
-              36,
-              37,
-              41,
-              42,
-              43,
-              44,
-              48,
-              49
-            ];
+        const SizedBox(height: 10),
+        Flexible(
+          // Permite al GridView ajustarse
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            child: GridView.count(
+              physics: const NeverScrollableScrollPhysics(),
+              shrinkWrap: true, // Ajusta el tamaño del GridView al contenido
+              crossAxisCount: 7,
+              children: List.generate(49, (index) {
+                int dayNumber = index + 1;
+                final List<int> ignoredIndices = [
+                  1,
+                  2,
+                  6,
+                  7,
+                  8,
+                  9,
+                  13,
+                  14,
+                  36,
+                  37,
+                  41,
+                  42,
+                  43,
+                  44,
+                  48,
+                  49
+                ];
 
-            final bool isIgnored = ignoredIndices.contains(dayNumber);
+                final bool isIgnored = ignoredIndices.contains(dayNumber);
 
-            // Ignora índices especificados
-            if (isIgnored) {
-              return Container();
-            }
+                if (isIgnored) {
+                  return Container();
+                }
 
-            // Ajusta dayNumber para el diseño del calendario
-            if (index >= 2 && index <= 5) {
-              dayNumber = index - 1;
-            } else if (index >= 9 && index <= 12) {
-              dayNumber = index - 5;
-            } else if (index >= 14 && index <= 35) {
-              dayNumber = index - 7;
-            } else if (index >= 37 && index <= 40) {
-              dayNumber = index - 9;
-            } else if (index >= 44 && index <= 47) {
-              dayNumber = index - 13;
-            }
+                if (index >= 2 && index <= 5) {
+                  dayNumber = index - 1;
+                } else if (index >= 9 && index <= 12) {
+                  dayNumber = index - 5;
+                } else if (index >= 14 && index <= 35) {
+                  dayNumber = index - 7;
+                } else if (index >= 37 && index <= 40) {
+                  dayNumber = index - 9;
+                } else if (index >= 44 && index <= 47) {
+                  dayNumber = index - 13;
+                }
 
-            Color finalDayColor = dayColor;
+                Color finalDayColor = Colors.transparent;
 
-            // Define el color del día según los eventos y el día actual
-            if (dayNumber > diaActual) {
-              finalDayColor = Colors.transparent;
-            } else {
-              //if (jsonValue is List)
-              //{
-              final int eventDay = events[dayNumber];
-              //if (eventDay != null)
-              //{
-              if (eventDay == 0) {
-                finalDayColor = Colors.green;
-              } else if (eventDay == 1) {
-                finalDayColor = Colors.orange;
-              } else if (eventDay == 2) {
-                finalDayColor = Colors.blue;
-              } else if (eventDay == 3) {
-                finalDayColor = Colors.yellow;
-              } else if (eventDay == 4) {
-                finalDayColor = Colors.red;
-              } else {
-                finalDayColor = Colors.green;
-              }
-              //}
-              //} //else {
-              //finalDayColor = Colors.green;
-              //}
-            }
+                if (dayNumber <= diaActual) {
+                  final int eventDay = events[dayNumber];
+                  finalDayColor = _getDayColor(eventDay);
+                }
 
-            return Container(
-              padding: EdgeInsets.zero,
-              margin: EdgeInsets.zero,
-              decoration: BoxDecoration(
-                border: Border.all(
-                  color: Colors.orange, // Cambiar al color que necesites
-                  width: 0.5,
-                ),
-              ),
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Flexible(
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text(
-                          '$dayNumber',
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: finalDayColor,
-                          ),
-                        ),
+                return GestureDetector(
+                  onTap: dayNumber <= diaActual
+                      ? () {
+                          _showEventDialog(context, dayNumber);
+                        }
+                      : null,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.orange, width: 0.5),
+                    ),
+                    child: Center(
+                      child: Text(
+                        '$dayNumber',
+                        style: TextStyle(fontSize: 18, color: finalDayColor),
                       ),
                     ),
-                  ],
+                  ),
+                );
+              }),
+            ),
+          ),
+        ),
+        const SizedBox(height: 20),
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text(
+                "Mes:",
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  //color: Colors.orange,
                 ),
               ),
-            );
-          }),
+              const SizedBox(width: 20),
+              Text(
+                fechaHora.split('-')[0],
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.green,
+                ),
+              ),
+            ],
+          ),
         ),
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text(
+                "Año:",
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  //color: Colors.orange,
+                ),
+              ),
+              const SizedBox(width: 20),
+              Text(
+                fechaHora.split('-')[1],
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.green,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Color _getDayColor(int eventDay) {
+    switch (eventDay) {
+      case 1:
+        return Colors.orange;
+      case 2:
+        return Colors.blue;
+      case 3:
+        return Colors.yellow;
+      case 4:
+        return Colors.red;
+      default:
+        return Colors.green;
+    }
+  }
+
+  void _showEventDialog(BuildContext context, int dayNumber) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Seleccionar Evento para el Día $dayNumber"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildDialogOption(
+                  context, dayNumber, "Sin accidente", Colors.green, 0),
+              _buildDialogOption(
+                  context, dayNumber, "Casi accidente", Colors.orange, 1),
+              _buildDialogOption(
+                  context, dayNumber, "No incapacitante", Colors.blue, 2),
+              _buildDialogOption(
+                  context, dayNumber, "Primer auxilio", Colors.yellow, 3),
+              _buildDialogOption(
+                  context, dayNumber, "Accidente incapacitante", Colors.red, 4),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildDialogOption(BuildContext context, int dayNumber, String label,
+      Color color, int eventValue) {
+    return ListTile(
+      leading: CircleAvatar(
+        backgroundColor: color,
+        radius: 10,
       ),
+      title: Text(label),
+      onTap: () {
+        Navigator.of(context).pop();
+        onEventUpdate(dayNumber, eventValue);
+      },
     );
   }
 }

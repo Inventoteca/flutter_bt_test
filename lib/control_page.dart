@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'res/custom_colors.dart';
 import '/widgets/day_number_grid.dart';
+import 'package:intl/intl.dart';
 
 class ControlPage extends StatefulWidget {
   final BluetoothDevice device;
@@ -28,6 +29,8 @@ class _ControlPageState extends State<ControlPage> {
   String receivedData = ""; // Almacena la respuesta procesada
   String fechaHora = "";
   int fechaDia = 31;
+  //int fechaMes = 12;
+  //int fechaAnio = 24;
   String buffer = ""; // Almacena datos fragmentados
   bool isLoading = false;
   List<int> events = List<int>.filled(32, 0);
@@ -167,8 +170,10 @@ class _ControlPageState extends State<ControlPage> {
           debugPrint("Fecha y hora recibidas: $dateTime");
 
           setState(() {
-            fechaHora = "$dateTime";
+            fechaHora = DateFormat('MM-yy').format(dateTime);
             fechaDia = dateTime.day;
+            //fechaMes = dateTime.month;
+            //fechaAnio = dateTime.year;
           });
         }
 
@@ -262,6 +267,48 @@ class _ControlPageState extends State<ControlPage> {
     ));
   }
 
+  // Función que se llamará desde DayNumberGrid
+  void updateEvent(int day, int value) {
+    setState(() {
+      events[day] = value; // Actualiza el evento para el día seleccionado
+    });
+
+    // Genera el JSON para simular su envío o guardado
+    Map<String, dynamic> jsonData = {"events": events};
+    String jsonString = jsonEncode(jsonData);
+
+    debugPrint("NEW JSON generado: $jsonString");
+    sendUpdatedEventsCommand();
+  }
+
+  void sendUpdatedEventsCommand() {
+    // Genera el mapa de datos
+    Map<String, dynamic> jsonData = {"events": events};
+
+    // Convierte a JSON
+    String jsonString = jsonEncode(jsonData);
+
+    // Codifica el JSON a Base64
+    String base64Data = base64Encode(utf8.encode(jsonString));
+
+    // Genera el comando completo
+    String command = '''
+  {
+    "id":5,
+    "method":"FS.Put",
+    "params":{
+      "filename":"events.txt",
+      "append":false,
+      "data":"$base64Data"
+    }
+  }
+  ''';
+
+    // Envía el comando
+    sendCommand(command);
+    debugPrint("Comando enviado: $command");
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -281,15 +328,38 @@ class _ControlPageState extends State<ControlPage> {
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.all(15.0),
-                      child: Text(
-                        widget.device.platformName,
-                        style: const TextStyle(fontWeight: FontWeight.normal),
+                    if (widget.device.platformName.startsWith('cruz_'))
+                      DayNumberGrid(
+                        diaHoy: fechaDia,
+                        events: events,
+                        fechaHora: fechaHora,
+                        onEventUpdate: updateEvent,
                       ),
-                    ),
-                    const SizedBox(height: 10),
-                    DayNumberGrid(diaHoy: fechaDia, events: events),
+                    /*Column(
+                        children: [
+                          const Padding(
+                            padding: EdgeInsets.all(15.0),
+                            child: Text(
+                              "Cruz de Seguridad",
+                              style: TextStyle(
+                                  fontWeight: FontWeight.normal, fontSize: 24),
+                            ),
+                          ),
+                          const SizedBox(
+                            height: 10,
+                            width: 400,
+                          ),
+                          
+                          Text(
+                            fechaHora,
+                            style: const TextStyle(
+                                fontWeight: FontWeight.normal, fontSize: 18),
+                          ),
+                        ],
+                      ),*/
+
+                    //const SizedBox(height: 10),
+
                     const SizedBox(height: 10),
                     ElevatedButton(
                       onPressed: txCtlCharacteristic != null &&
@@ -297,7 +367,7 @@ class _ControlPageState extends State<ControlPage> {
                           ? () =>
                               sendCommand('{"id":1999,"method":"Wifi.Scan"}')
                           : null,
-                      child: const Text("WiFi.Scan"),
+                      child: const Text("WiFi"),
                     ),
                     ElevatedButton(
                       onPressed: txCtlCharacteristic != null &&
@@ -305,19 +375,23 @@ class _ControlPageState extends State<ControlPage> {
                           ? () => sendCommand(
                               '{"id":2,"method":"SetLast","params":{"year":2024,"month":1,"day":1}}')
                           : null,
-                      child: const Text("Last AC"),
+                      child: const Text("Ajustar Fecha y Hora"),
                     ),
-                    ElevatedButton(
-                      onPressed: txCtlCharacteristic != null &&
-                              dataCharacteristic != null
-                          ? () => sendCommand(
-                              '{"id":3,"method":"FS.Put","params":{"filename":"events.txt","append":false,"data":"eyJldmVudHMiOiBbMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMF19"}}')
-                          : null,
-                      child: const Text("Eventos.txt"),
-                    ),
-                    Text(
-                      fechaHora,
-                      style: const TextStyle(fontWeight: FontWeight.normal),
+                    //ElevatedButton(
+                    //  onPressed: txCtlCharacteristic != null &&
+                    //          dataCharacteristic != null
+                    //      ? () => sendCommand(
+                    //          '{"id":3,"method":"FS.Put","params":{"filename":"events.txt","append":false,"data":"eyJldmVudHMiOiBbMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMCwgMF19"}}')
+                    //
+                    //      : null,
+                    //  child: const Text("Eventos.txt"),
+                    //),
+                    Padding(
+                      padding: const EdgeInsets.all(15.0),
+                      child: Text(
+                        widget.device.platformName,
+                        style: const TextStyle(fontWeight: FontWeight.normal),
+                      ),
                     ),
                   ],
                 ),
