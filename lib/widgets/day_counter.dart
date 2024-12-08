@@ -1,19 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class DayCounter extends StatefulWidget {
-  final int diaHoy;
-  final String fechaHora;
+  final int dias;
+  final DateTime lastFechaHora;
   final List<int> events;
   final Function(int day, int value) onEventUpdate;
-  final Function(DateTime dateTime) onDateUpdate;
+  final Function(DateTime dateTime) onLastUpdate;
 
   const DayCounter({
     super.key,
-    required this.diaHoy,
+    required this.dias,
     required this.events,
-    required this.fechaHora,
+    required this.lastFechaHora,
     required this.onEventUpdate,
-    required this.onDateUpdate,
+    required this.onLastUpdate,
   });
 
   @override
@@ -21,10 +22,11 @@ class DayCounter extends StatefulWidget {
 }
 
 class _DayCounterState extends State<DayCounter> {
-  late String fechaHora;
+  //late String fechaHora;
 
   Future<void> _selectDate(BuildContext context) async {
-    DateTime initialDate = DateTime.now();
+    //DateTime initialDate = DateTime.now();
+    DateTime initialDate = widget.lastFechaHora;
     DateTime? pickedDate = await showDatePicker(
       context: context,
       initialDate: initialDate,
@@ -44,13 +46,13 @@ class _DayCounterState extends State<DayCounter> {
       );
 
       // Llama a la función de actualización con la fecha ajustada
-      widget.onDateUpdate(adjustedDate);
+      widget.onLastUpdate(adjustedDate);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final int diaActual = widget.diaHoy;
+    final int diaActual = widget.dias;
 
     return Column(
       mainAxisSize: MainAxisSize.min, // Previene expandirse infinitamente
@@ -58,7 +60,7 @@ class _DayCounterState extends State<DayCounter> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         const Padding(
-          padding: EdgeInsets.all(8.0),
+          padding: EdgeInsets.all(15.0),
           child: Text(
             "Dias sin accidentes",
             style: TextStyle(
@@ -68,45 +70,28 @@ class _DayCounterState extends State<DayCounter> {
             ),
           ),
         ),
-        const SizedBox(height: 10),
-        const SizedBox(height: 20),
         Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: InkWell(
-            onTap: () => _selectDate(context), // Selector para el mes
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text(
-                  "Mes:",
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    //color: Colors.orange,
-                  ),
-                ),
-                const SizedBox(width: 20),
-                Text(
-                  widget.fechaHora.split('-')[0],
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.green,
-                  ),
-                ),
-              ],
+          padding: EdgeInsets.all(15.0),
+          child: Text(
+            '$diaActual', // Reemplaza con el valor dinámico si está disponible
+            style: const TextStyle(
+              fontSize: 48,
+              fontWeight: FontWeight.bold,
+              color: Colors.green,
             ),
           ),
         ),
+        const SizedBox(height: 10),
+        const SizedBox(height: 20),
         Padding(
-          padding: const EdgeInsets.all(8.0),
+          padding: const EdgeInsets.all(30.0),
           child: InkWell(
-            onTap: () => _selectDate(context), // Selector para el anio
-            child: Row(
+            onTap: () => _selectDate(context), // Selector para el mes
+            child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const Text(
-                  "Año:",
+                  "Último accidente:",
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -115,7 +100,8 @@ class _DayCounterState extends State<DayCounter> {
                 ),
                 const SizedBox(width: 20),
                 Text(
-                  widget.fechaHora.split('-')[1],
+                  DateFormat().format(widget
+                      .lastFechaHora), // DateFormat('MM-yy').format(dateTime);
                   style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,

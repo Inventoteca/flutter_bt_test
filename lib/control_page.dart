@@ -30,6 +30,8 @@ class _ControlPageState extends State<ControlPage> {
   String receivedData = ""; // Almacena la respuesta procesada
   String fechaHora = "01-25";
   int fechaDia = 31;
+  late DateTime lastFechaHora;
+  int lastFechaDia = 31;
   //int fechaMes = 12;
   //int fechaAnio = 24;
   String buffer = ""; // Almacena datos fragmentados
@@ -115,6 +117,9 @@ class _ControlPageState extends State<ControlPage> {
         await sendCommand('{"id":1,"method":"Sys.GetTime"}');
 
         await sendCommand(
+            '{"id":2,"method":"Config.Get","params":{"key":"app"}}');
+
+        await sendCommand(
             '{"id":1,"method":"FS.Get","params":{"filename":"events.txt"}}');
       } else {
         await sendCommand(
@@ -151,6 +156,7 @@ class _ControlPageState extends State<ControlPage> {
       // Decodifica el contenido recibido
       String frameContent = utf8.decode(frameData);
       DateTime dateTime = DateTime.now();
+      DateTime lastDateTime = DateTime.now();
       debugPrint("BT in: $frameContent");
 
       try {
@@ -214,6 +220,19 @@ class _ControlPageState extends State<ControlPage> {
           } else {
             debugPrint("Contenido inesperado decodificado: $decodedContent");
           }
+        } else if (jsonResponse['result'] != null &&
+            jsonResponse['result']['last_ac'] != null) {
+          int unixTime = jsonResponse['result']['last_ac'];
+
+          // Convierte UNIX time a DateTime
+          lastDateTime = DateTime.fromMillisecondsSinceEpoch(unixTime * 1000);
+
+          debugPrint("Last Acc: $lastDateTime");
+
+          setState(() {
+            lastFechaHora = lastDateTime;
+            lastFechaDia = dateTime.difference(lastDateTime).inDays;
+          });
         }
       } catch (e) {
         debugPrint("Error al procesar los datos recibidos: $e");
@@ -282,6 +301,44 @@ class _ControlPageState extends State<ControlPage> {
     debugPrint("NEW DateTime: $dateTime");
     sendSetTimeCommand(dateTime.year, dateTime.month, dateTime.day,
         dateTime.hour, dateTime.minute, dateTime.second);
+  }
+
+  // Función que se llamará desde DayNumberGrid
+  void updateLast(DateTime dateTime) {
+    setState(() {
+      //events[day] = value; // Actualiza el evento para el día seleccionado
+    });
+
+    // Genera el JSON para simular su envío o guardado
+    //Map<String, dynamic> jsonData = {"events": events};
+    //String jsonString = jsonEncode(jsonData);
+
+    debugPrint("NEW Last ACC: $dateTime");
+    sendSetLastCommand(dateTime);
+  }
+
+  Future<void> sendSetLastCommand(DateTime dateTime) async {
+    // Genera el mapa de datos
+
+    // Genera el comando completo
+    String command = '''
+  {
+    "id":7,
+    "method":"Config.Set",
+    "params":{
+      "config":{"app.last_ac": ${dateTime.millisecondsSinceEpoch},
+    }
+  }
+  ''';
+
+    // Envía el comando
+    await sendCommand(command);
+    debugPrint("Comando enviado: $command");
+
+    await sendCommand(
+        '{"id":9,"method":"Config.Save","params":{"reboot":false}}');
+
+    await sendCommand('{"id":2,"method":"Config.Get","params":{"key":"app"}}');
   }
 
   Future<void> sendSetTimeCommand(
@@ -382,11 +439,11 @@ class _ControlPageState extends State<ControlPage> {
                       ),
                     if (widget.device.platformName.startsWith('dias_'))
                       DayCounter(
-                        diaHoy: fechaDia,
+                        dias: lastFechaDia,
                         events: events,
-                        fechaHora: fechaHora,
+                        lastFechaHora: lastFechaHora,
                         onEventUpdate: updateEvent,
-                        onDateUpdate: updateDate,
+                        onLastUpdate: updateLast,
                       ),
                     /*Column(
                         children: [
