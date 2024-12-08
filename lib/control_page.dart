@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'res/custom_colors.dart';
 import '/widgets/day_number_grid.dart';
+import '/widgets/day_counter.dart';
 import 'package:intl/intl.dart';
 
 class ControlPage extends StatefulWidget {
@@ -27,7 +28,7 @@ class _ControlPageState extends State<ControlPage> {
       "5f6d4f53-5f52-5043-5f64-6174615f5f5f"; // UUID correcto
 
   String receivedData = ""; // Almacena la respuesta procesada
-  String fechaHora = "";
+  String fechaHora = "01-25";
   int fechaDia = 31;
   //int fechaMes = 12;
   //int fechaAnio = 24;
@@ -109,7 +110,8 @@ class _ControlPageState extends State<ControlPage> {
       }
 
       // Una vez conectados y descubiertas las características, enviar el comando config.get
-      if (widget.device.platformName.startsWith('cruz_')) {
+      if ((widget.device.platformName.startsWith('cruz_')) ||
+          (widget.device.platformName.startsWith('dias_'))) {
         await sendCommand('{"id":1,"method":"Sys.GetTime"}');
 
         await sendCommand(
@@ -282,8 +284,8 @@ class _ControlPageState extends State<ControlPage> {
         dateTime.hour, dateTime.minute, dateTime.second);
   }
 
-  void sendSetTimeCommand(
-      int year, int month, int day, int hour, int minute, int second) {
+  Future<void> sendSetTimeCommand(
+      int year, int month, int day, int hour, int minute, int second) async {
     // Genera el mapa de datos
 
     // Genera el comando completo
@@ -303,8 +305,10 @@ class _ControlPageState extends State<ControlPage> {
   ''';
 
     // Envía el comando
-    sendCommand(command);
+    await sendCommand(command);
     debugPrint("Comando enviado: $command");
+    await sendCommand(
+        '{"id":1,"method":"FS.Get","params":{"filename":"events.txt"}}');
   }
 
   // Función que se llamará desde DayNumberGrid
@@ -370,6 +374,14 @@ class _ControlPageState extends State<ControlPage> {
                   children: [
                     if (widget.device.platformName.startsWith('cruz_'))
                       DayNumberGrid(
+                        diaHoy: fechaDia,
+                        events: events,
+                        fechaHora: fechaHora,
+                        onEventUpdate: updateEvent,
+                        onDateUpdate: updateDate,
+                      ),
+                    if (widget.device.platformName.startsWith('dias_'))
+                      DayCounter(
                         diaHoy: fechaDia,
                         events: events,
                         fechaHora: fechaHora,
