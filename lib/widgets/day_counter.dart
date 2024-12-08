@@ -40,9 +40,9 @@ class _DayCounterState extends State<DayCounter> {
         pickedDate.year,
         pickedDate.month,
         pickedDate.day,
-        initialDate.hour,
-        initialDate.minute,
-        initialDate.second,
+        0,
+        0,
+        0,
       );
 
       // Llama a la función de actualización con la fecha ajustada

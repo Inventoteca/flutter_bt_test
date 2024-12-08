@@ -326,7 +326,7 @@ class _ControlPageState extends State<ControlPage> {
     "id":7,
     "method":"Config.Set",
     "params":{
-      "config":{"app.last_ac": ${dateTime.millisecondsSinceEpoch},
+      "config":{"app.last_ac": ${(dateTime.millisecondsSinceEpoch / 1000).round()},
     }
   }
   ''';
