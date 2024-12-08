@@ -149,7 +149,7 @@ class _DayNumberGridState extends State<DayNumberGrid> {
         Padding(
           padding: const EdgeInsets.all(8.0),
           child: InkWell(
-            onTap: () => _selectDate(context), // Selector para el mes
+            //onTap: () => _selectDate(context), // Selector para el mes
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -177,7 +177,7 @@ class _DayNumberGridState extends State<DayNumberGrid> {
         Padding(
           padding: const EdgeInsets.all(8.0),
           child: InkWell(
-            onTap: () => _selectDate(context), // Selector para el anio
+            //onTap: () => _selectDate(context), // Selector para el anio
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [

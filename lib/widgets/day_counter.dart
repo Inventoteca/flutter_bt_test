@@ -24,9 +24,64 @@ class DayCounter extends StatefulWidget {
 class _DayCounterState extends State<DayCounter> {
   //late String fechaHora;
 
+  Future<void> _showDaysInputDialog(BuildContext context) async {
+    final TextEditingController controller = TextEditingController();
+
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Ingresar días sin accidentes"),
+          content: TextField(
+            controller: controller,
+            keyboardType: TextInputType.number,
+            //decoration: const InputDecoration(
+            //  hintText: "",
+            //),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text("Cancelar"),
+            ),
+            TextButton(
+              onPressed: () {
+                final int? days = int.tryParse(controller.text);
+                if (days != null && days >= 0 && days <= 9999) {
+                  Navigator.of(context).pop(days);
+                }
+              },
+              child: const Text("Aceptar"),
+            ),
+          ],
+        );
+      },
+    ).then((days) {
+      if (days != null) {
+        _processDaysInput(days);
+      }
+    });
+  }
+
+  void _processDaysInput(int days) {
+    // Calcula la nueva fecha sumando los días a `lastFechaHora`
+    DateTime newDate = widget.lastFechaHora.add(Duration(days: days));
+
+    // Convierte la nueva fecha en Unix timestamp
+    //int unixTime = newDate.millisecondsSinceEpoch ~/ 1000;
+
+    // Llama a la función de ajuste con el Unix timestamp
+    widget.onLastUpdate(newDate);
+  }
+
   Future<void> _selectDate(BuildContext context) async {
     //DateTime initialDate = DateTime.now();
-    DateTime initialDate = widget.lastFechaHora;
+    DateTime initialDate = widget.lastFechaHora.isBefore(DateTime(2000))
+        ? DateTime(2000)
+        : widget.lastFechaHora;
+
     DateTime? pickedDate = await showDatePicker(
       context: context,
       initialDate: initialDate,
@@ -72,12 +127,15 @@ class _DayCounterState extends State<DayCounter> {
         ),
         Padding(
           padding: EdgeInsets.all(15.0),
-          child: Text(
-            '$diaActual', // Reemplaza con el valor dinámico si está disponible
-            style: const TextStyle(
-              fontSize: 48,
-              fontWeight: FontWeight.bold,
-              color: Colors.green,
+          child: InkWell(
+            onTap: () => _selectDate(context), // Selector para el mes
+            child: Text(
+              '$diaActual', // Reemplaza con el valor dinámico si está disponible
+              style: const TextStyle(
+                fontSize: 48,
+                fontWeight: FontWeight.bold,
+                color: Colors.green,
+              ),
             ),
           ),
         ),

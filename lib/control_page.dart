@@ -299,8 +299,7 @@ class _ControlPageState extends State<ControlPage> {
     //String jsonString = jsonEncode(jsonData);
 
     debugPrint("NEW DateTime: $dateTime");
-    sendSetTimeCommand(dateTime.year, dateTime.month, dateTime.day,
-        dateTime.hour, dateTime.minute, dateTime.second);
+    sendSetDateCommand(dateTime.year, dateTime.month, dateTime.day);
   }
 
   // Función que se llamará desde DayNumberGrid
@@ -341,8 +340,7 @@ class _ControlPageState extends State<ControlPage> {
     await sendCommand('{"id":2,"method":"Config.Get","params":{"key":"app"}}');
   }
 
-  Future<void> sendSetTimeCommand(
-      int year, int month, int day, int hour, int minute, int second) async {
+  Future<void> sendSetDateCommand(int year, int month, int day) async {
     // Genera el mapa de datos
 
     // Genera el comando completo
@@ -353,10 +351,7 @@ class _ControlPageState extends State<ControlPage> {
     "params":{
       "year":$year,
       "month": $month,
-      "day": $day,
-      "hour": $hour,
-      "minute": $minute,
-      "second": $second
+      "day": $day
     }
   }
   ''';
@@ -364,6 +359,9 @@ class _ControlPageState extends State<ControlPage> {
     // Envía el comando
     await sendCommand(command);
     debugPrint("Comando enviado: $command");
+
+    await sendCommand('{"id":1,"method":"Sys.GetTime"}');
+
     await sendCommand(
         '{"id":1,"method":"FS.Get","params":{"filename":"events.txt"}}');
   }
@@ -408,6 +406,38 @@ class _ControlPageState extends State<ControlPage> {
     // Envía el comando
     sendCommand(command);
     debugPrint("Comando enviado: $command");
+  }
+
+  Future<DateTime?> _selectDateTime(BuildContext context) async {
+    DateTime initialDate = DateTime.now();
+
+    // Selector de fecha
+    DateTime? selectedDate = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: DateTime(2000), // Fecha mínima
+      lastDate: DateTime(2100), // Fecha máxima
+    );
+
+    if (selectedDate != null) {
+      // Selector de hora
+      TimeOfDay? selectedTime = await showTimePicker(
+        context: context,
+        initialTime: TimeOfDay.fromDateTime(initialDate),
+      );
+
+      if (selectedTime != null) {
+        // Combina la fecha y hora seleccionadas
+        return DateTime(
+          selectedDate.year,
+          selectedDate.month,
+          selectedDate.day,
+          selectedTime.hour,
+          selectedTime.minute,
+        );
+      }
+    }
+    return null;
   }
 
   @override
@@ -471,22 +501,65 @@ class _ControlPageState extends State<ControlPage> {
                     //const SizedBox(height: 10),
 
                     const SizedBox(height: 10),
-                    ElevatedButton(
+                    /*ElevatedButton(
                       onPressed: txCtlCharacteristic != null &&
                               dataCharacteristic != null
                           ? () =>
                               sendCommand('{"id":1999,"method":"Wifi.Scan"}')
                           : null,
                       child: const Text("WiFi"),
-                    ),
+                    ),*/
                     ElevatedButton(
                       onPressed: txCtlCharacteristic != null &&
                               dataCharacteristic != null
-                          ? () => sendCommand(
-                              '{"id":2,"method":"SetLast","params":{"year":2024,"month":1,"day":1}}')
+                          ? () async {
+                              // Abre un selector de fecha y hora
+                              DateTime? selectedDateTime =
+                                  await _selectDateTime(context);
+
+                              if (selectedDateTime != null) {
+                                // Envía el comando con la fecha seleccionada
+                                int year = selectedDateTime.year;
+                                int month = selectedDateTime.month;
+                                int day = selectedDateTime.day;
+                                int hour = selectedDateTime.hour;
+                                int minute = selectedDateTime.minute;
+
+                                String command = '''
+                                  {
+                                    "id":2,
+                                    "method":"SetTime",
+                                    "params":{
+                                      "hour":$hour,
+                                      "minute":$minute
+                                    }
+                                  }''';
+
+                                await sendCommand(command);
+                                debugPrint("Comando enviado: $command");
+
+                                command = '''
+                                  {
+                                    "id":3,
+                                    "method":"SetDate",
+                                    "params":{
+                                      "year":$year,
+                                      "month":$month,
+                                      "day":$day
+                                    }
+                                  }''';
+
+                                await sendCommand(command);
+                                debugPrint("Comando enviado: $command");
+
+                                await sendCommand(
+                                    '{"id":1,"method":"Sys.GetTime"}');
+                              }
+                            }
                           : null,
                       child: const Text("Ajustar Fecha y Hora"),
                     ),
+
                     //ElevatedButton(
                     //  onPressed: txCtlCharacteristic != null &&
                     //          dataCharacteristic != null
