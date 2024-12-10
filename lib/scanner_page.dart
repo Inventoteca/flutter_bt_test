@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'control_page.dart';
 import 'res/custom_colors.dart';
+import 'widgets/day_number_grid.dart';
 
 class ScannerPage extends StatefulWidget {
   const ScannerPage({Key? key}) : super(key: key);
@@ -18,7 +19,39 @@ class _ScannerPageState extends State<ScannerPage> {
   @override
   void initState() {
     super.initState();
-    startScan();
+    checkBluetooth();
+    // startScan();
+  }
+
+  Future<void> checkBluetooth() async {
+    final isBluetoothOn = await FlutterBluePlus.adapterState.first;
+
+    if (isBluetoothOn != BluetoothAdapterState.on) {
+      showBluetoothWarning();
+    } else {
+      startScan();
+    }
+  }
+
+  void showBluetoothWarning() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Bluetooth no activado'),
+          content: const Text(
+              'Por favor, active el Bluetooth para buscar dispositivos.'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void startScan() {

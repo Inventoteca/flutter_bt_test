@@ -6,7 +6,7 @@
 
 
     <application
-        android:label="flutter_bt_test"
+        android:label="Smart Industry"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
