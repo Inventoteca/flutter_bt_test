@@ -7,7 +7,7 @@ environment:
   sdk: ^3.5.4
 
 dependencies:
-  flutter_launcher_icons: ^0.13.1
+  flutter_launcher_icons: ^0.14.2
   flutter_blue_plus: ^1.34.5
   flip_card: ^0.7.0
   cupertino_icons: ^1.0.5
@@ -27,5 +27,5 @@ flutter:
 flutter_icons:
   android: true
   ios: true
-  image_path: "lib/images/app_icon_foreground.png" 
+  image_path: "lib/images/SmartIndustryFondo.png" 
   #image_path: "assets/images/app_icon.png"
