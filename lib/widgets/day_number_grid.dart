@@ -119,7 +119,7 @@ class _DayNumberGridState extends State<DayNumberGrid> {
                 Color finalDayColor = Colors.transparent;
 
                 if (dayNumber <= diaActual) {
-                  final int eventDay = widget.events[dayNumber];
+                  final int eventDay = widget.events[dayNumber - 1];
                   finalDayColor = _getDayColor(eventDay);
                 }
 
@@ -257,7 +257,7 @@ class _DayNumberGridState extends State<DayNumberGrid> {
       title: Text(label),
       onTap: () {
         Navigator.of(context).pop();
-        widget.onEventUpdate(dayNumber, eventValue);
+        widget.onEventUpdate((dayNumber), eventValue);
       },
     );
   }

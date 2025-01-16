@@ -369,7 +369,7 @@ class _ControlPageState extends State<ControlPage> {
   // Función que se llamará desde DayNumberGrid
   void updateEvent(int day, int value) {
     setState(() {
-      events[day] = value; // Actualiza el evento para el día seleccionado
+      events[day - 1] = value; // Actualiza el evento para el día seleccionado
     });
 
     // Genera el JSON para simular su envío o guardado
