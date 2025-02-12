@@ -360,7 +360,7 @@ class _ControlPageState extends State<ControlPage> {
     await sendCommand(command);
     debugPrint("Comando enviado: $command");
 
-    await sendCommand('{"id":1,"method":"Sys.GetTime"}');
+    await sendCommand('{"id":1,"method":"GetTime"}');
 
     await sendCommand(
         '{"id":1,"method":"FS.Get","params":{"filename":"events.txt"}}');
@@ -528,17 +528,20 @@ class _ControlPageState extends State<ControlPage> {
                                 String command = '''
                                   {
                                     "id":2,
-                                    "method":"SetTime",
+                                    "method":"Time",
                                     "params":{
-                                      "hour":$hour,
-                                      "minute":$minute
+                                      "y":$year,
+                                      "m":$month,
+                                      "d":$day,
+                                      "h":$hour,
+                                      "m":$minute
                                     }
                                   }''';
 
                                 await sendCommand(command);
                                 debugPrint("Comando enviado: $command");
 
-                                command = '''
+                                /* command = '''
                                   {
                                     "id":3,
                                     "method":"SetDate",
@@ -548,12 +551,12 @@ class _ControlPageState extends State<ControlPage> {
                                       "day":$day
                                     }
                                   }''';
-
+                                */
                                 await sendCommand(command);
                                 debugPrint("Comando enviado: $command");
 
                                 await sendCommand(
-                                    '{"id":1,"method":"Sys.GetTime"}');
+                                    '{"id":3,"method":"GetTime"}');
                               }
                             }
                           : null,
