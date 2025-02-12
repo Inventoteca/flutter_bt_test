@@ -534,7 +534,7 @@ class _ControlPageState extends State<ControlPage> {
                                       "m":$month,
                                       "d":$day,
                                       "h":$hour,
-                                      "m":$minute
+                                      "n":$minute
                                     }
                                   }''';
 
