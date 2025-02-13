@@ -114,7 +114,7 @@ class _ControlPageState extends State<ControlPage> {
       // Una vez conectados y descubiertas las características, enviar el comando config.get
       if ((widget.device.platformName.startsWith('cruz_')) ||
           (widget.device.platformName.startsWith('dias_'))) {
-        await sendCommand('{"id":1,"method":"Sys.GetTime"}');
+        await sendCommand('{"id":1,"method":"GetTime"}');
 
         await sendCommand(
             '{"id":2,"method":"Config.Get","params":{"key":"app"}}');

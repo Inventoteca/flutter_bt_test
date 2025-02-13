@@ -7,7 +7,6 @@ environment:
   sdk: ^3.5.4
 
 dependencies:
-  flutter_launcher_icons: ^0.14.2
   flutter_blue_plus: ^1.34.5
   flip_card: ^0.7.0
   cupertino_icons: ^1.0.5
@@ -20,6 +19,7 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^4.0.0
+  flutter_launcher_icons: ^0.14.2
 
 flutter:
   uses-material-design: true
@@ -27,5 +27,7 @@ flutter:
 flutter_icons:
   android: true
   ios: true
-  image_path: "lib/images/SmartIndustryFondo.png" 
+  image_path: "assets/icon.png"
+  adaptive_icon_background: "#FFFFFF"  # Fondo blanco, cámbialo según necesites
+  #image_path: "lib/images/SmartIndustryFondo.png" 
   #image_path: "assets/images/app_icon.png"
